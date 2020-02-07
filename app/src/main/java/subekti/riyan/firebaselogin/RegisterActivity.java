@@ -1,5 +1,7 @@
 package subekti.riyan.firebaselogin;
 
+import android.app.ListActivity;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -11,16 +13,23 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import subekti.riyan.firebaselogin.model.Requests;
 
 public class RegisterActivity extends AppCompatActivity {
 
+    private DatabaseReference database;
     private FirebaseAuth mAuth;
     private Button mSignUp;
     private EditText etEmail, etPassword, etRePassword;
+    private ProgressDialog loading;
     private static final String TAG = "";
 
     @Override
@@ -28,6 +37,7 @@ public class RegisterActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register);
 
+        database = FirebaseDatabase.getInstance().getReference();
         mAuth = FirebaseAuth.getInstance();
 
         mSignUp = findViewById(R.id.btn_signup);
@@ -37,8 +47,8 @@ public class RegisterActivity extends AppCompatActivity {
         mSignUp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String email = etEmail.getText().toString();
-                String password = etPassword.getText().toString();
+                final String email = etEmail.getText().toString();
+                final String password = etPassword.getText().toString();
                 String repassword = etRePassword.getText().toString();
 
                 if (email.equals("")) {
@@ -56,9 +66,12 @@ public class RegisterActivity extends AppCompatActivity {
                                     if (task.isSuccessful()) {
                                         // Sign in success, update UI with the signed-in user's information
                                         Log.d(TAG, "createUserWithEmail:success");
-                                        FirebaseUser user = mAuth.getCurrentUser();
                                         Toast.makeText(RegisterActivity.this, "Authentication success.",
                                                 Toast.LENGTH_SHORT).show();
+                                        loading = ProgressDialog.show(RegisterActivity.this, null, "Pleas Wait",
+                                                true, false);
+                                        submitUser(new Requests(email.toLowerCase(), password.toLowerCase()));
+                                        mAuth.signOut();
                                         startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
                                     } else {
                                         // If sign in fails, display a message to the user.
@@ -70,16 +83,38 @@ public class RegisterActivity extends AppCompatActivity {
                                     // ...
                                 }
                             });
+
                 }
             }
         });
 
     }
 
+    private void submitUser(Requests requests) {
+        database.child("Users").child("Penjual").child(mAuth.getCurrentUser().getUid())
+//                child adalah membuat cabang baru didalam database simple-crud-b171b
+//               .child("Table_Manual")
+//                Push adalah membuat child dengan nama acak
+
+                .setValue(requests)
+                .addOnSuccessListener(RegisterActivity.this, new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+
+                        loading.dismiss();
+
+                        etEmail.setText("");
+                        etPassword.setText("");
+
+                    }
+                });
+    }
+
     @Override
     public void onStart() {
         super.onStart();
-        // Check if user is signed in (non-null) and update UI accordingly.
-        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (mAuth.getCurrentUser() != null){
+            startActivity(new Intent(RegisterActivity.this, MainActivity.class));
+        }
     }
 }

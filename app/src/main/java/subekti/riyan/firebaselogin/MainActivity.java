@@ -1,7 +1,10 @@
 package subekti.riyan.firebaselogin;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -9,6 +12,7 @@ import com.google.firebase.auth.FirebaseUser;
 
 public class MainActivity extends AppCompatActivity {
 
+    private Button btnLogout;
     private FirebaseAuth mAuth;
     private TextView tvUser;
 
@@ -20,6 +24,7 @@ public class MainActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
 
         tvUser = findViewById(R.id.tv_user);
+        btnLogout = findViewById(R.id.btn_logout);
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
@@ -30,5 +35,13 @@ public class MainActivity extends AppCompatActivity {
             tvUser.setText(email);
 
         }
+
+        btnLogout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mAuth.signOut();
+                startActivity(new Intent(MainActivity.this, LoginActivity.class));
+            }
+        });
     }
 }

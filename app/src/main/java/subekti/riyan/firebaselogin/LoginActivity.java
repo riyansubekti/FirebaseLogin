@@ -404,5 +404,13 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             showProgress(false);
         }
     }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (mAuth.getCurrentUser() != null){
+            startActivity(new Intent(LoginActivity.this, MainActivity.class));
+        }
+    }
 }
 
